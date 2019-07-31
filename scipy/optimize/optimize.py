@@ -3362,6 +3362,8 @@ def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
 
     vk = vk_vec[0]
     k = len(sk_vec)
+    if k ==0:
+        print("Parameters: ",len(xk))
 
     gfk = myfprime(xk + mu * vk)
     pk = -gfk

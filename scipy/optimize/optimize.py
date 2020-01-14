@@ -2423,7 +2423,7 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
 def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
                     gtol=1e-5, norm=Inf, eps=1e-4, maxiter=None,
                     disp=False, return_all=False, wo_bar_vec=None, ws_vec=None, gamma=1.01, clearF=True,
-                    iter=None, alpha_k=0.01, sk_vec=None, yk_vec=None, F=None, t_vec=None, L=5,
+                    iter=None, alpha_k=0.01, sk_vec=None, yk_vec=None, F=None, t_vec=None, L=5, memF=None, memL=None,
                     **unknown_options):
     """
     Bk = minibatch
@@ -2467,7 +2467,6 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
     gfk = myfprime(wk).reshape(-1, 1)
 
     F.append(gfk)
-
 
     # two loop recursion
 
@@ -2517,14 +2516,14 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
                 sk_vec.clear()
                 yk_vec.clear()
                 if clearF: F.clear()
-                print("Clearing buffers")
+                #print("Clearing buffers")
                 wk = wo_bar
                 flag_ret = 0
             if flag_ret:
                 sk = wn_bar - wo_bar
                 fisher = np.asarray(F)[:, :, 0].T
                 yk = np.dot(fisher, np.dot(fisher.T, sk))
-                #yk = (np.sum(fisher, 1, keepdims=True) * sk) / shape(fisher)[-1]
+                # yk = (np.sum(fisher, 1, keepdims=True) * sk) / shape(fisher)[-1]
                 # yk = 0
                 # for i in F:
                 #    yk += np.dot(i,np.dot(i.T,sk))
@@ -2546,6 +2545,8 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
     iter.append(k)
     wo_bar_vec.append(wo_bar)  # np.zeros_like(wk)
     ws_vec.append(ws)  # 0
+    memL.append(len(sk_vec))
+    memF.append(len(F))
 
     result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
                             njev=0, status=0,
@@ -2553,7 +2554,6 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
                             nit=k)
 
     return result
-
 
 
 '''
@@ -2853,9 +2853,11 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
 
 def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
                      gtol=1e-5, norm=Inf, eps=1e-4, maxiter=None,
-                     disp=False, return_all=False, wo_bar_vec=None, ws_vec=None,vo_bar_vec=None, vs_vec=None, vk_vec=None, L=5,
+                     disp=False, return_all=False, wo_bar_vec=None, ws_vec=None, vo_bar_vec=None, vs_vec=None,
+                     vk_vec=None, L=5,
                      mu_val=None, mu_fac=1.01, mu_init=0.1, mu_clip=0.99, clearF=True, reset=False, dirNorm=True,
                      iter=None, alpha_k=1.0, sk_vec=None, yk_vec=None, F=None, t_vec=None, gamma=1.01, old_fun_val=None,
+                     memF=None, memL=None,
                      **unknown_options):
     """
     Bk = minibatch
@@ -2905,9 +2907,9 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    gfk = myfprime(wk+mu*vk).reshape(-1, 1)
+    gfk = myfprime(wk + mu * vk).reshape(-1, 1)
 
-    if k==0: F.append(gfk)
+    if k == 0: F.append(gfk)
     # two loop recursion
 
     q = gfk
@@ -2925,14 +2927,13 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
         beta = rho * np.dot(yk_vec[i].T, r)
         r = r + sk_vec[i] * (a[i] - beta)
     pk = r
-    if vecnorm(pk,2) == np.inf or vecnorm(pk,2) == np.nan:
+    if vecnorm(pk, 2) == np.inf or vecnorm(pk, 2) == np.nan:
         pk = np.ones_like(wk)
 
     elif dirNorm:
-        pk = pk/vecnorm(pk,2) #Exploding gradients (direction normalization)
+        pk = pk / vecnorm(pk, 2)  # Exploding gradients (direction normalization)
 
-
-    if k==0:F.clear()
+    if k == 0: F.clear()
     '''
     pk = -gfk
     a = []
@@ -2952,16 +2953,14 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
 
     flag_ret = 1
 
-    vk = mu*vk - alpha_k * pk
+    vk = mu * vk - alpha_k * pk
     wk = wk + vk
 
     ws = ws + wk  # +mu*vk
     vs = vs + vk
-    
+
     gfkp1 = myfprime(wk).reshape(-1, 1)
     F.append(gfkp1)
-    
-    
 
     if k % L == 0:
         wn_bar = ws / L
@@ -2973,9 +2972,9 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
                 sk_vec.clear()
                 yk_vec.clear()
                 mu = np.minimum(mu / mu_fac, mu_clip)
-                mu = np.maximum(mu,mu_init)
+                mu = np.maximum(mu, mu_init)
                 if clearF: F.clear()
-                print("Clearing buffers")
+                #print("Clearing buffers")
                 wk = wo_bar
                 vk = vo_bar
                 flag_ret = 0
@@ -3010,6 +3009,8 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
     ws_vec.append(ws)  # 0
     vs_vec.append(vs)  # 0
     vk_vec.append(vk)  # 0
+    memL.append(len(sk_vec))
+    memF.append(len(F))
 
     result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
                             njev=0, status=0,
@@ -3362,8 +3363,8 @@ def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
 
     vk = vk_vec[0]
     k = len(sk_vec)
-    if k ==0:
-        print("Parameters: ",len(xk))
+    if k == 0:
+        print("Parameters: ", len(xk))
 
     gfk = myfprime(xk + mu * vk)
     pk = -gfk

@@ -2424,6 +2424,7 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
                     gtol=1e-5, norm=Inf, eps=1e-4, maxiter=None,
                     disp=False, return_all=False, wo_bar_vec=None, ws_vec=None, gamma=1.01, clearF=True,
                     iter=None, alpha_k=0.01, sk_vec=None, yk_vec=None, F=None, t_vec=None, L=5, memF=None, memL=None,
+                    timeLapse=[],
                     **unknown_options):
     """
     Bk = minibatch
@@ -2504,7 +2505,7 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
 
     flag_ret = 1
 
-    wk = wk - alpha_k * pk
+    wk = wk - alpha_k[0] * pk
 
     ws = ws + wk
 
@@ -2542,6 +2543,7 @@ def _minimize_adaQN(fun, x0, args=(), jac=None, callback=None,
     if callback is not None:
         callback(wk)
     k += 1
+
     iter.append(k)
     wo_bar_vec.append(wo_bar)  # np.zeros_like(wk)
     ws_vec.append(ws)  # 0
@@ -2857,7 +2859,7 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
                      vk_vec=None, L=5,
                      mu_val=None, mu_fac=1.01, mu_init=0.1, mu_clip=0.99, clearF=True, reset=False, dirNorm=True,
                      iter=None, alpha_k=1.0, sk_vec=None, yk_vec=None, F=None, t_vec=None, gamma=1.01, old_fun_val=None,
-                     memF=None, memL=None,
+                     memF=None, memL=None, timeLapse=[],
                      **unknown_options):
     """
     Bk = minibatch
@@ -2953,7 +2955,7 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
 
     flag_ret = 1
 
-    vk = mu * vk - alpha_k * pk
+    vk = mu * vk - alpha_k[0] * pk
     wk = wk + vk
 
     ws = ws + wk  # +mu*vk

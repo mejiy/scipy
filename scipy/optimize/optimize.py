@@ -15,7 +15,7 @@
 #      cubic-interpolation (Mar. 2004)
 
 from __future__ import division, print_function, absolute_import
-
+#test ex
 # Minimization routines
 
 __all__ = ['fmin', 'fmin_powell', 'fmin_bfgs', 'fmin_lbfgs', 'fmin_olbfgs', 'fmin_lnaq', 'fmin_ncg', 'fmin_cg',

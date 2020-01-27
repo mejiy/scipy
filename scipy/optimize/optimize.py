@@ -2893,7 +2893,7 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
         ws = np.zeros_like(wk)
         vs = np.zeros_like(wk)
         vk = np.zeros_like(wk)
-        mu = mu_init
+        mu = mu_val[0]
 
     else:
         wo_bar = wo_bar_vec[0]  # np.zeros_like(wk)

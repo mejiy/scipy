@@ -2856,7 +2856,7 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
 def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
                      gtol=1e-5, norm=Inf, eps=1e-4, maxiter=None,
                      disp=False, return_all=False, wo_bar_vec=None, ws_vec=None, vo_bar_vec=None, vs_vec=None,
-                     vk_vec=None, L=5,
+                     vk_vec=None, L=5,err=None,
                      mu_val=None, mu_fac=1.01, mu_init=0.1, mu_clip=0.99, clearF=True, reset=False, dirNorm=True,
                      iter=None, alpha_k=1.0, sk_vec=None, yk_vec=None, F=None, t_vec=None, gamma=1.01, old_fun_val=None,
                      memF=None, memL=None, timeLapse=[],
@@ -3013,6 +3013,7 @@ def _minimize_adaNAQ(fun, x0, args=(), jac=None, callback=None,
     vk_vec.append(vk)  # 0
     memL.append(len(sk_vec))
     memF.append(len(F))
+    err.append(f(wk))
 
     result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
                             njev=0, status=0,

@@ -2416,6 +2416,197 @@ def _minimize_bfgs(fun, x0, args=(), jac=None, callback=None,
         result['allvecs'] = allvecs
     return result
 
+def _minimize_mnaq(fun, x0, args=(), jac=None, callback=None,mu=0.95,
+                   gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,
+                   disp=False, return_all=False,
+                   **unknown_options):
+    """
+    Minimization of scalar function of one or more variables using the
+    BFGS algorithm.
+
+    Options
+    -------
+    disp : bool
+        Set to True to print convergence messages.
+    maxiter : int
+        Maximum number of iterations to perform.
+    gtol : float
+        Gradient norm must be less than `gtol` before successful
+        termination.
+    norm : float
+        Order of norm (Inf is max, -Inf is min).
+    eps : float or ndarray
+        If `jac` is approximated, use this value for the step size.
+
+    """
+    _check_unknown_options(unknown_options)
+    f = fun
+    fprime = jac
+    epsilon = eps
+    retall = return_all
+
+    x0 = asarray(x0).flatten()
+    xk = x0
+
+    if xk.ndim == 0:
+        xk.shape = (1,)
+    if maxiter is None:
+        maxiter = len(xk) * 200
+    func_calls, f = wrap_function(f, args)
+    if fprime is None:
+        grad_calls, myfprime = wrap_function(approx_fprime, (f, epsilon))
+    else:
+        grad_calls, myfprime = wrap_function(fprime, args)
+
+    # gfk = myfprime(xk)
+    k = 0
+    N = len(xk)
+    I = numpy.eye(N, dtype=int)
+    Hk = I
+    err_plot = []
+    vk = numpy.zeros(N)
+    #mu = 0.01
+    sigma = 0.02
+    xk = xk + mu * vk
+    # Sets the initial step guess to dx ~ 1
+
+    # old_fval = f(xk)
+    # old_old_fval = old_fval + np.linalg.norm(gfk) / 2
+
+    if retall:
+        allvecs = [xk]
+    warnflag = 0
+    # gnorm = vecnorm(gfk, ord=norm)
+    gnorm = 1
+    xk = x0
+    flag_err = 1
+    while (gnorm > gtol) and (k < maxiter):
+        wmuv = xk + mu * vk
+        gfk = myfprime(wmuv)
+        gnorm = vecnorm(gfk, ord=norm)
+
+        flag_err = 0
+        pk = -numpy.dot(Hk, gfk)
+
+        pknorm = vecnorm(pk, ord=norm)
+        if pknorm > 1000:
+            delta = 1e-7
+        else:
+            delta = 1e-4
+
+        try:
+            LHS = f(wmuv + pk)
+            RHS = f(wmuv) + 1e-3 * numpy.dot(gfk.T, pk)
+            if LHS <= RHS:
+                lamda_k = 1
+            else: 
+                #first iter
+                if k == 0:
+                    L = 100
+                    old_old_fval = LHS + np.linalg.norm(gfk) / 2
+                    lamda_k, fc, gc, old_fval, old_old_fval, gfkp1 = \
+                        _line_search_wolfe12(f, myfprime, wmuv, pk, gfk,
+                                             LHS, old_old_fval, amin=1e-100, amax=1e100)
+                    
+                else:
+                    L = 100*(vecnorm(yk, ord=norm) / vecnorm(sk, ord=norm))
+                    Qk = L * numpy.eye(N)
+                    pkQ = numpy.sqrt(numpy.dot(pk.T, numpy.dot(Qk, pk)))
+                    lamda_k = -(delta* numpy.dot(gfk.T, pk)) / numpy.square(pkQ)
+
+        except _LineSearchError:
+            # Line search failed to find a better solution.
+            warnflag = 2
+            break
+
+        vkp1 = mu * vk + lamda_k * pk
+        xkp1 = xk + vkp1
+        if k % 2000 == 0:
+            err = f(xkp1)
+            print("error:", err, "\tepoch:", k, "\talpha:", lamda_k, "\tgnorm:", gnorm)
+
+        if retall:
+            allvecs.append(xkp1)
+        sk = xkp1 - wmuv
+        xk = xkp1
+        vk = vkp1
+        gfkp1 = myfprime(xkp1) 
+        yk = gfkp1 - gfk
+        gfk = gfkp1
+        if callback is not None:
+            callback(xk)
+
+        #gnorm = vecnorm(gfk, ord=norm)
+        p_times_q = np.dot(sk.T, yk)
+        if gnorm > 1e-2:
+            const = 2.0
+        else:
+            const = 100.0
+        if p_times_q < 0:
+            p_times_p = np.dot(sk.T, sk)
+            zeta = const - (p_times_q / (p_times_p * gnorm))
+        else:
+            zeta = const
+        yk = yk + zeta * gnorm * sk #with global convergence term
+
+        if (gnorm <= gtol):
+            break
+
+        # if not numpy.isfinite(old_fval):
+        # We correctly found +-Inf as optimal value, or something went
+        # wrong.
+        #    warnflag = 2
+        #    break
+
+        try:  # this was handled in numeric, let it remaines for more safety
+            rhok = 1.0 / (numpy.dot(yk.T, sk))
+        except ZeroDivisionError:
+            rhok = 1000.0
+            if disp:
+                print("Divide-by-zero encountered: rhok assumed large")
+        if isinf(rhok):  # this is patch for numpy
+            rhok = 1000.0
+            if disp:
+                print("Divide-by-zero encountered: rhok assumed large")
+        if k == 0:
+            Hk = numpy.eye(N) * (p_times_q / numpy.dot(yk.T, yk))
+        else:
+            A1 = I - sk[:, numpy.newaxis] * yk[numpy.newaxis, :] * rhok
+            A2 = I - yk[:, numpy.newaxis] * sk[numpy.newaxis, :] * rhok
+            Hk = numpy.dot(A1, numpy.dot(Hk, A2)) + (rhok * sk[:, numpy.newaxis] *
+                                                     sk[numpy.newaxis, :])
+        k += 1
+    fval = f(xkp1)
+    #fval = old_fval
+    if np.isnan(fval):
+        # This can happen if the first call to f returned NaN;
+        # the loop is then never entered.
+        warnflag = 2
+
+    if warnflag == 2:
+        msg = _status_message['pr_loss']
+    elif k >= maxiter:
+        warnflag = 1
+        msg = _status_message['maxiter']
+    else:
+        msg = _status_message['success']
+
+    if disp:
+        print("%s%s" % ("Warning: " if warnflag != 0 else "", msg))
+        print("         Current function value: %f" % fval)
+        print("         Iterations: %d" % k)
+        print("         Function evaluations: %d" % func_calls[0])
+        print("         Gradient evaluations: %d" % grad_calls[0])
+
+    result = OptimizeResult(fun=fval, jac=gfk, hess_inv=Hk, nfev=func_calls[0],
+                            njev=grad_calls[0], status=warnflag,
+                            success=(warnflag == 0), message=msg, x=xk,
+                            nit=k)
+    if retall:
+        result['allvecs'] = allvecs
+    return result
+
+
 
 #######################################################################################################################
 

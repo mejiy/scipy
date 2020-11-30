@@ -3518,7 +3518,7 @@ def _minimize_olbfgs(fun, x0, args=(), jac=None, callback=None,
 
 
 def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
-                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,
+                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=None,
                     disp=False, return_all=False, vk_vec=None, sk_vec=None, yk_vec=None, m=8, alpha_k=1.0, mu=None,
                     dirNorm=True,
                     **unknown_options):
@@ -3596,6 +3596,7 @@ def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
     if callback is not None:
         callback(xk)
     k += 1
+    err.append(f(xk))
 
     result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
                             njev=0, status=0,

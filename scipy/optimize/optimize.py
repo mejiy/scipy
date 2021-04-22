@@ -4580,9 +4580,7 @@ def _minimize_adasecant(fun, x0, args=(), jac=None, callback=None,
 ############ Adasecant Scribe ##################
 
 '''
-def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,
-                             epsilon=None, finite_diff_rel_step=None,
-                             hess=None):
+def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,epsilon=1e-6, finite_diff_rel_step=None,hess=None):
     """
     Creates a ScalarFunction object for use with scalar minimizers
     (BFGS/LBFGSB/SLSQP/TNC/CG/etc).

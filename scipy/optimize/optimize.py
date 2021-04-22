@@ -37,6 +37,7 @@ from .linesearch import (line_search_wolfe1, line_search_wolfe2,
                          line_search_wolfe2 as line_search,
                          LineSearchWarning)
 from scipy._lib._util import getargspec_no_self as _getargspec
+from scipy.optimize._differentiable_functions import ScalarFunction, FD_METHODS
 
 # standard status messages of optimizers
 _status_message = {'success': 'Optimization terminated successfully.',

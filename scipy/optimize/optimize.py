@@ -4580,6 +4580,219 @@ def _minimize_adasecant(fun, x0, args=(), jac=None, callback=None,
 
 '''
 
+def _minimize_sr1(fun, x0, args=(), jac=None, callback=None, errPlot=[],
+                  gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, mu=0.8,
+                  disp=False, return_all=False, finite_diff_rel_step=None,
+                  **unknown_options):
+    """
+    Minimization of scalar function of one or more variables using the
+    BFGS algorithm.
+
+    Options
+    -------
+    disp : bool
+        Set to True to print convergence messages.
+    maxiter : int
+        Maximum number of iterations to perform.
+    gtol : float
+        Gradient norm must be less than `gtol` before successful
+        termination.
+    norm : float
+        Order of norm (Inf is max, -Inf is min).
+    eps : float or ndarray
+        If `jac is None` the absolute step size used for numerical
+        approximation of the jacobian via forward differences.
+    return_all : bool, optional
+        Set to True to return a list of the best solution at each of the
+        iterations.
+    finite_diff_rel_step : None or array_like, optional
+        If `jac in ['2-point', '3-point', 'cs']` the relative step size to
+        use for numerical approximation of the jacobian. The absolute step
+        size is computed as ``h = rel_step * sign(x0) * max(1, abs(x0))``,
+        possibly adjusted to fit into the bounds. For ``method='3-point'``
+        the sign of `h` is ignored. If None (default) then step is selected
+        automatically.
+
+    """
+    _check_unknown_options(unknown_options)
+    retall = return_all
+
+    x0 = asarray(x0).flatten()
+    if x0.ndim == 0:
+        x0.shape = (1,)
+    if maxiter is None:
+        maxiter = len(x0) * 200
+
+    sf = _prepare_scalar_function(fun, x0, jac, args=args, epsilon=eps,
+                                  finite_diff_rel_step=finite_diff_rel_step)
+
+    f = sf.fun
+    myfprime = sf.grad
+
+    old_fval = f(x0)
+    gfk = myfprime(x0)
+    errPlot.append(old_fval)
+    if not np.isscalar(old_fval):
+        try:
+            old_fval = old_fval.item()
+        except (ValueError, AttributeError) as e:
+            raise ValueError("The user-provided "
+                             "objective function must "
+                             "return a scalar value.") from e
+
+    k = 0
+    N = len(x0)
+    I = np.eye(N, dtype=int)
+    Hk = I
+
+    # Sets the initial step guess to dx ~ 1
+    old_old_fval = old_fval + np.linalg.norm(gfk) / 2
+
+    xk = x0
+    vk = np.zeros_like(x0)
+    if retall:
+        allvecs = [x0]
+    warnflag = 0
+    gnorm = vecnorm(gfk, ord=norm)
+    deltak = 5.0
+
+    from scipy.linalg import get_blas_funcs
+    _syr = get_blas_funcs('syr', dtype='d')
+    from fides.subproblem import (
+        solve_nd_trust_region_subproblem, solve_1d_trust_region_subproblem,
+    )
+    import trustregion
+    while (gnorm > gtol) and (k < maxiter):
+        gfk = myfprime(xk)
+        old_fval = f(xk)
+        #sk, case = solve_nd_trust_region_subproblem(Hk, gfk, deltak)
+        sk = trustregion.solve(gfk,Hk,deltak)
+        model_value = old_fval + np.dot(gfk, sk) + 0.5 * np.dot(sk, Hk.dot(sk))  # mk(sk)
+        rhok = (old_fval - f(xk + sk)) / (old_fval - model_value)
+        if rhok < 0.25:
+            deltak = 0.25 * deltak
+        elif rhok > 0.75 and abs(np.linalg.norm(sk) - deltak) < 1e-10:
+            deltak = min(2 * deltak, 1e10)
+        else:
+            deltak = deltak
+            # Update iterate
+        if rhok > 0.01:
+            #sk, case = solve_nd_trust_region_subproblem(Hk, gfk, deltak)
+            #sk = trustregion.solve(gfk, Hk, deltak)
+
+            xkp1 = xk + sk
+        else:
+            xkp1 = xk
+
+
+        if retall:
+            allvecs.append(xkp1)
+
+        old_fval = f(xkp1)
+        gfkp1 = myfprime(xkp1)
+
+        yk = gfkp1 - gfk
+
+        # sk = sk.reshape(-1,1)
+        # yk = yk.reshape(-1,1)
+        # Global convergence
+        p_times_q = np.dot(sk.T, yk)
+        if gnorm > 1e-2:
+            const = 2.0
+        else:
+            const = 100.0
+        if p_times_q < 0:
+            p_times_p = np.dot(sk.T, sk)
+            zeta = const - (p_times_q / (p_times_p * gnorm))
+        else:
+            zeta = const
+        yk = yk + zeta * gnorm * sk
+        # """
+
+        if callback is not None:
+            callback(xk)
+        k += 1
+        gnorm = vecnorm(gfk, ord=norm)
+        if (gnorm <= gtol):
+            break
+
+        if not np.isfinite(old_fval):
+            # We correctly found +-Inf as optimal value, or something went
+            # wrong.
+            warnflag = 2
+            break
+
+        #A1 = (sk-np.dot(Hk,yk)).reshape(-1,1)
+        #num = np.dot(A1,A1.T)
+        #den = np.dot(A1.T,yk)
+        #if abs(den) >0:
+         #   Hk = Hk + (num/den)
+        # else:
+        #    Hk = Hk
+        #    print("skipping")
+        #_symv = get_blas_funcs('symv', dtype='d')
+        #min_denominator = 1e-6
+        #yknorm = vecnorm(yk, ord=norm)
+
+        #Mw = _symv(1, Hk, yk)
+        #z_minus_Mw = sk - Mw
+        #denominator = np.dot(yk, z_minus_Mw)
+        #z_minus_Mw_norm = vecnorm(z_minus_Mw, ord=norm)
+
+        # If the denominator is too small
+        # we just skip the update.
+        #if np.abs(denominator) <= min_denominator * yknorm * z_minus_Mw_norm:
+        #    pass
+        # Update matrix
+        #else:
+         #   Hk = _syr(1 / denominator, z_minus_Mw, a=Hk)
+
+        rhok_inv = np.dot(yk, sk)
+        # this was handled in numeric, let it remaines for more safety
+        if rhok_inv == 0.:
+            rhok = 1000.0
+            if disp:
+                print("Divide-by-zero encountered: rhok assumed large")
+        else:
+            rhok = 1. / rhok_inv
+
+        A1 = I - sk[:, np.newaxis] * yk[np.newaxis, :] * rhok
+        A2 = I - yk[:, np.newaxis] * sk[np.newaxis, :] * rhok
+        Hk = np.dot(A1, np.dot(Hk, A2)) + (rhok * sk[:, np.newaxis] *
+                                           sk[np.newaxis, :])
+
+        errPlot.append(old_fval)
+        print("k : ", k, " err : ", old_fval, " delta : ", deltak, " gnorm :", gnorm)
+        gfk = gfkp1
+        xk = xkp1
+    fval = old_fval
+
+    if warnflag == 2:
+        msg = _status_message['pr_loss']
+    elif k >= maxiter:
+        warnflag = 1
+        msg = _status_message['maxiter']
+    elif np.isnan(gnorm) or np.isnan(fval) or np.isnan(xk).any():
+        warnflag = 3
+        msg = _status_message['nan']
+    else:
+        msg = _status_message['success']
+
+    if disp:
+        print("%s%s" % ("Warning: " if warnflag != 0 else "", msg))
+        print("         Current function value: %f" % fval)
+        print("         Iterations: %d" % k)
+        print("         Function evaluations: %d" % sf.nfev)
+        print("         Gradient evaluations: %d" % sf.ngev)
+
+    result = OptimizeResult(fun=fval, jac=gfk, hess_inv=Hk, nfev=sf.nfev,
+                            njev=sf.ngev, status=warnflag,
+                            success=(warnflag == 0), message=msg, x=xk,
+                            nit=k)
+    if retall:
+        result['allvecs'] = allvecs
+    return result
+
 
 ####################################################################################################################
 
@@ -6495,6 +6708,7 @@ def show_options(solver=None, method=None, disp=True):
             ('molnaq', 'scipy.optimize.optimize._minimize_molnaq'),
             ('lnaq', 'scipy.optimize.optimize._minimize_lnaq'),
             ('olnaq', 'scipy.optimize.optimize._minimize_olnaq'),
+            ('sr1', 'scipy.optimize.optimize._minimize_sr1'),      
             ('solnaq', 'scipy.optimize.optimize._minimize_solnaq'),
             ('adam', 'scipy.optimize.optimize._minimize_adam'),
             ('adaQN', 'scipy.optimize.optimize._minimize_adaQN'),

@@ -4667,7 +4667,7 @@ def _prepare_scalar_function(fun, x0, jac=None, args=(), bounds=None,epsilon=1e-
     # ScalarFunction caches. Reuse of fun(x) during grad
     # calculation reduces overall function evaluations.
     sf = ScalarFunction(fun, x0, args, grad, hess,
-                        finite_diff_rel_step, bounds, epsilon=epsilon)
+                        finite_diff_rel_step, bounds)
 
     return sf
 

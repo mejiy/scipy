@@ -4709,13 +4709,13 @@ def _minimize_sr1(fun, x0, args=(), jac=None, callback=None, errPlot=[],
     """
     _check_unknown_options(unknown_options)
     retall = return_all
-
+          
     x0 = asarray(x0).flatten()
     if x0.ndim == 0:
         x0.shape = (1,)
     if maxiter is None:
         maxiter = len(x0) * 200
-
+    eps = 1e-6
     sf = _prepare_scalar_function(fun, x0, jac, args=args, epsilon=eps,
                                   finite_diff_rel_step=finite_diff_rel_step)
 

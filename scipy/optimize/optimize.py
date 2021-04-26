@@ -3433,7 +3433,7 @@ def _minimize_onaq(fun, x0, args=(), jac=None, callback=None,
 
 
 def _minimize_olbfgs(fun, x0, args=(), jac=None, callback=None,
-                     gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, err=None,
+                     gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, err=[],
                      disp=False, return_all=False, vk_vec=None, sk_vec=None, yk_vec=None, m=8, alpha_k=1.0, mu=None,
                      dirNorm=True,
                      **unknown_options):
@@ -3520,7 +3520,7 @@ def _minimize_olbfgs(fun, x0, args=(), jac=None, callback=None,
 
 
 def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
-                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=None,
+                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=[],
                     disp=False, return_all=False, vk_vec=None, sk_vec=None, yk_vec=None, m=8, alpha_k=1.0, mu=None,
                     dirNorm=True,
                     **unknown_options):

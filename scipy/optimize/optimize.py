@@ -3735,12 +3735,12 @@ def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
 
     # ψ_kp1 = ψ_k + γk ( (1/β - α) θ_k - 1/β ψ_k )
     # ψ_kp1 = ψ_k - γk ( (α - 1/β) θ_k + 1/β ψ_k )
-    v = v_temp - (lr_t * decay_t / np.power(k, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
+    v = v_temp - (lr_t * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
 
     # θ_k = θ_k + γk ( (1/β - α) θ_k - 1/β ψ_k - βg)
     # θ_k = θ_k - γk ( (α - 1/β ) θ_k + 1/β ψ_k + βg)
 
-    xk = xk - (lr_t * decay_t / np.power(k, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp + beta_t * grad)
+    xk = xk - (lr_t * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp + beta_t * grad)
     v_buffer.append(v)
 
     if callback is not None:

@@ -3519,8 +3519,8 @@ def _minimize_olbfgs(fun, x0, args=(), jac=None, callback=None,
     return result
 
 def _minimize_molnaq(fun, x0, args=(), jac=None, callback=None,
-                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=[],grad_pre=None,
-                    disp=False, return_all=False, vk_vec=None, sk_vec=None, yk_vec=None, m=8, alpha_k=1.0, mu=None,
+                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=[],grad_pre=None,grad_curr=None,
+                    disp=False, return_all=False, vk_vec=None, sk_vec=None, yk_vec=None, m=8, alpha_k=1.0, mu_val=None,
                     dirNorm=True,
                     **unknown_options):
     '''
@@ -3557,16 +3557,19 @@ def _minimize_molnaq(fun, x0, args=(), jac=None, callback=None,
         grad_calls, myfprime = wrap_function(fprime, args)
 
     vk = vk_vec[0]
-    
+    mu = mu_val[0]
     k = len(sk_vec)
     if k == 0:
         print("Parameters: ", len(xk))
-        grad_pre.append(myfprime(xk))
+        g = myfprime(xk)
+        grad_pre.append(g)
+        grad_curr.append(g)
     
     prev_grad = grad_pre[0]
+    curr_grad = grad_curr[0]
     #gfk = myfprime(xk + mu * vk)
            
-    curr_grad = myfprime(xk)
+    
     gfk = (1+mu) * curr_grad - mu*prev_grad
            
     pk = -gfk
@@ -3597,6 +3600,7 @@ def _minimize_molnaq(fun, x0, args=(), jac=None, callback=None,
     sk_vec.append(sk)
     grad_pre.append(curr_grad)
     gfkp1 = myfprime(xkp1)
+    grad_curr.append(gfkp1)
     yk = gfkp1 - gfk + sk
     yk_vec.append(yk)
     xk = xkp1

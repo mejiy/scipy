@@ -3518,6 +3518,101 @@ def _minimize_olbfgs(fun, x0, args=(), jac=None, callback=None,
 
     return result
 
+def _minimize_molnaq(fun, x0, args=(), jac=None, callback=None,
+                    gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=[],grad_pre=None,
+                    disp=False, return_all=False, vk_vec=None, sk_vec=None, yk_vec=None, m=8, alpha_k=1.0, mu=None,
+                    dirNorm=True,
+                    **unknown_options):
+    '''
+    Minimization of scalar function of one or more variables using the
+    BFGS algorithm.
+
+    Options
+    -------
+    disp : bool
+        Set to True to print convergence messages.
+    maxiter : int
+        Maximum number of iterations to perform.
+    gtol : float
+        Gradient norm must be less than `gtol` before successful
+        termination.
+    norm : float
+        Order of norm (Inf is max, -Inf is min).
+    eps : float or ndarray
+        If `jac` is approximated, use this value for the step size.
+
+    '''
+
+    _check_unknown_options(unknown_options)
+    f = fun
+    fprime = jac
+    epsilon = eps
+    retall = return_all
+
+    xk = asarray(x0).flatten()
+    func_calls, f = wrap_function(f, args)
+    if fprime is None:
+        grad_calls, myfprime = wrap_function(approx_fprime, (f, epsilon))
+    else:
+        grad_calls, myfprime = wrap_function(fprime, args)
+
+    vk = vk_vec[0]
+    
+    k = len(sk_vec)
+    if k == 0:
+        print("Parameters: ", len(xk))
+        grad_pre.append(myfprime(xk))
+    
+    prev_grad = grad_pre[0]
+    #gfk = myfprime(xk + mu * vk)
+           
+    curr_grad = myfprime(xk)
+    gfk = (1+mu) * curr_grad - mu*prev_grad
+           
+    pk = -gfk
+    a = []
+    idx = min(k, m)
+    for i in range(min(k, m)):
+        a.append(numpy.dot(sk_vec[idx - 1 - i].T, pk) / numpy.dot(sk_vec[idx - 1 - i].T, yk_vec[idx - 1 - i]))
+        pk = pk - a[i] * yk_vec[idx - 1 - i]
+    if k > 0:
+        term = 0
+        for i in range(min(k, m)):
+            term = term + (numpy.dot(sk_vec[idx - 1 - i].T, yk_vec[idx - 1 - i]) / numpy.dot(yk_vec[idx - 1 - i].T,
+                                                                                             yk_vec[idx - 1 - i]))
+        pk = pk * term / idx
+    else:
+        pk = 1e-10 * pk
+    for i in reversed(range(min(k, m))):
+        b = numpy.dot(yk_vec[idx - 1 - i].T, pk) / numpy.dot(yk_vec[idx - 1 - i].T, sk_vec[idx - 1 - i])
+        pk = pk + (a[i] - b) * sk_vec[idx - 1 - i]
+
+    if dirNorm == True:
+        pk = pk / vecnorm(pk, 2)  # direction normalization
+
+    vkp1 = mu * vk + alpha_k[0] * pk
+    xkp1 = xk + vkp1
+    sk = xkp1 - (xk + mu * vk)
+    vk_vec.append(vkp1)
+    sk_vec.append(sk)
+    grad_pre.append(curr_grad)
+    gfkp1 = myfprime(xkp1)
+    yk = gfkp1 - gfk + sk
+    yk_vec.append(yk)
+    xk = xkp1
+
+    if callback is not None:
+        callback(xk)
+    k += 1
+    err.append(f(xk))
+
+    result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
+                            njev=0, status=0,
+                            success=(0), message=0, x=xkp1,
+                            nit=k)
+
+    return result
+
 
 def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
                     gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,err=[],

@@ -3707,7 +3707,7 @@ def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
     return result
 
 def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,
-                     err=[], disp=False, return_all=False, alpha_t=None, beta_t=None, speed_ini_t=None, decay_t=None,
+                     err=[], disp=False, return_all=False, alpha_t=None, beta_t=None, speed_ini_t=None, decay_t=None,decaypower_t=None,
                      lr_t=None,v_buffer=None,iter=[],
                      **unknown_options):
 

@@ -3706,6 +3706,56 @@ def _minimize_olnaq(fun, x0, args=(), jac=None, callback=None,
 
     return result
 
+def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,
+                     err=[], disp=False, return_all=False, alpha_t=None, beta_t=None, speed_ini_t=None, decay_t=None,
+                     lr_t=None,v_buffer=None,iter=[],
+                     **unknown_options):
+
+    _check_unknown_options(unknown_options)
+    f = fun
+    fprime = jac
+    epsilon = eps
+    retall = return_all
+
+    xk = asarray(x0).flatten()
+    func_calls, f = wrap_function(f, args)
+    if fprime is None:
+        grad_calls, myfprime = wrap_function(approx_fprime, (f, epsilon))
+    else:
+        grad_calls, myfprime = wrap_function(fprime, args)
+
+    grad = myfprime(xk)
+    v = v_buffer[0]
+
+    if iter[0] == 0:
+        v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad
+    else:
+        v_temp = v
+
+    # ψ_kp1 = ψ_k + γk ( (1/β - α) θ_k - 1/β ψ_k )
+    # ψ_kp1 = ψ_k - γk ( (α - 1/β) θ_k + 1/β ψ_k )
+    v = v_temp - (lr_t * decay_t / np.power(k, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
+
+    # θ_k = θ_k + γk ( (1/β - α) θ_k - 1/β ψ_k - βg)
+    # θ_k = θ_k - γk ( (α - 1/β ) θ_k + 1/β ψ_k + βg)
+
+    xk = xk - (lr_t * decay_t / np.power(k, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp + beta_t * grad)
+    v_buffer.append(v)
+
+    if callback is not None:
+        callback(xk)
+        
+    iter.append(iter[0]+1)
+    err.append(f(xk))
+
+    result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
+                            njev=0, status=0,
+                            success=(0), message=0, x=xk,
+                            nit=iter[0])
+
+    return result
+
+
 
 '''
 def _minimize_adam(fun, x0, args=(), jac=None, callback=None,
@@ -6896,6 +6946,7 @@ def show_options(solver=None, method=None, disp=True):
             ('olbfgs', 'scipy.optimize.optimize._minimize_olbfgs'),
             ('molbfgs', 'scipy.optimize.optimize._minimize_molbfgs'),
             ('molnaq', 'scipy.optimize.optimize._minimize_molnaq'),
+            ('indian', 'scipy.optimize.optimize._minimize_indian'),
             ('lnaq', 'scipy.optimize.optimize._minimize_lnaq'),
             ('olnaq', 'scipy.optimize.optimize._minimize_olnaq'),
             ('sr1', 'scipy.optimize.optimize._minimize_sr1'),      

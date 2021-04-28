@@ -3726,8 +3726,9 @@ def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
 
     grad = myfprime(xk)
     v = v_buffer[0]
+    k = iter[0]
 
-    if iter[0] == 0:
+    if k == 0:
         v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad
     else:
         v_temp = v
@@ -3745,13 +3746,13 @@ def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     if callback is not None:
         callback(xk)
         
-    iter.append(iter[0]+1)
+    iter.append(k+1)
     err.append(f(xk))
 
     result = OptimizeResult(fun=0, jac=0, hess_inv=0, nfev=0,
                             njev=0, status=0,
                             success=(0), message=0, x=xk,
-                            nit=iter[0])
+                            nit=k)
 
     return result
 

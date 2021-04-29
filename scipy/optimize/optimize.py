@@ -3757,7 +3757,7 @@ def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     return result
 
 #nadian 2021/04/29
-def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,
+def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, mu=None,
                      err=[], disp=False, return_all=False, alpha_t=None, beta_t=None, speed_ini_t=None, decay_t=None,decaypower_t=None, s_buffer=None,
                      lr_t=None,v_buffer=None,iter=[],
                      **unknown_options):

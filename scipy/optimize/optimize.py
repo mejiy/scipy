@@ -3776,7 +3776,7 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    gfk = myfprime(xk + mu * s)
+    grad = myfprime(xk + mu * s)
     v = v_buffer[0]
     k = iter[0]
     

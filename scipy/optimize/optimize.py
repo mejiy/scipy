@@ -3768,6 +3768,7 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     epsilon = eps
     retall = return_all
 
+    s = s_buffer[0]
     xk = asarray(x0).flatten()
     func_calls, f = wrap_function(f, args)
     if fprime is None:
@@ -3775,12 +3776,12 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    
+    gfk = myfprime(xk + mu * s)
     v = v_buffer[0]
     k = iter[0]
-    s = s_buffer[0]
+    
 
-    gfk = myfprime(xk + mu * s)
+    
            
     if k == 0:
         v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad

@@ -3758,7 +3758,7 @@ def _minimize_indian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
 
 #nadian 2021/04/29
 def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None,
-                     err=[], disp=False, return_all=False, alpha_t=None, beta_t=None, speed_ini_t=None, decay_t=None,decaypower_t=None, sk_vec=None,
+                     err=[], disp=False, return_all=False, alpha_t=None, beta_t=None, speed_ini_t=None, decay_t=None,decaypower_t=None, s_buffer=None,
                      lr_t=None,v_buffer=None,iter=[],
                      **unknown_options):
 
@@ -3775,9 +3775,10 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    gfk = myfprime(xk + mu * sk)
+    gfk = myfprime(xk + mu * s)
     v = v_buffer[0]
     k = iter[0]
+    s = s_buffer[0]
 
     if k == 0:
         v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad
@@ -3794,7 +3795,7 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     xkp1 = xk - (lr_t * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp + beta_t * grad)
     sk = xkp1 - xk
     v_buffer.append(v)
-    sk_vec.append(sk)
+    s_buffer.append(s)
 
     if callback is not None:
         callback(xk)

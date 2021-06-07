@@ -2097,7 +2097,7 @@ def fmin_cm(f, x0, fprime=None, args=(), gtol=1e-5, norm=Inf,
         else:
             return res['x']
            
-    def fmin_nag(f, x0, fprime=None, args=(), gtol=1e-5, norm=Inf,
+def fmin_nag(f, x0, fprime=None, args=(), gtol=1e-5, norm=Inf,
               epsilon=_epsilon, maxiter=None, full_output=0, disp=1,
               retall=0, callback=None):
     """

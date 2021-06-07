@@ -4032,7 +4032,7 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
 
    # v = v_temp - (lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
     
-    vp1 = mu * v + (lr_t[0] * grad)
+    vp1 = mu * v + (lr_t * grad)
     xkp1 = xk + vp1
  
     #sk = xkp1 - xk  
@@ -4089,7 +4089,7 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
 
    # v = v_temp - (lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
     
-    vp1 = mu * v + (lr_t[0] * grad)
+    vp1 = mu * v + (lr_t * grad)
     xkp1 = xk + vp1
  
     #sk = xkp1 - xk  

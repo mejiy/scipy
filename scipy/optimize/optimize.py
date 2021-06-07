@@ -4022,7 +4022,7 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
     v = v_buffer[0]
     k = iter[0]
       
-    vp1 = mu * v - (lr_t * grad)
+    vp1 = mu * v - (lr_t[0] * grad)
     xkp1 = xk + vp1
  
     v_buffer.append(vp1)
@@ -4064,7 +4064,7 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
     grad = myfprime(xk + mu * v)
     k = iter[0]
     
-    vp1 = mu * v - (lr_t * grad)
+    vp1 = mu * v - (lr_t[0] * grad)
     xkp1 = xk + vp1
   
     v_buffer.append(vp1)

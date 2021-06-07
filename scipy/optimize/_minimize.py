@@ -23,7 +23,7 @@ from scipy.sparse.linalg import LinearOperator
 # unconstrained minimization
 from .optimize import (_minimize_neldermead, _minimize_powell, _minimize_cg,_minimize_sr1,
                        _minimize_obfgs,_minimize_onaq,_minimize_olbfgs,_minimize_olnaq,_minimize_adam,
-                       _minimize_adasecant,_minimize_adaQN,_minimize_adaNAQ,_minimize_molnaq,_minimize_indian,_minimize_nadian,
+                       _minimize_adasecant,_minimize_adaQN,_minimize_adaNAQ,_minimize_molnaq,_minimize_indian,_minimize_nadian,_minimize_cm,_minimize_nag
                        _minimize_newtoncg,_minimize_scalar_brent, _minimize_scalar_bounded,
                        _minimize_scalar_golden, MemoizeJac)
 from ._trustregion_dogleg import _minimize_dogleg
@@ -625,7 +625,10 @@ def minimize(fun, x0, args=(), method=None, jac=None, hess=None,
         return _minimize_sr1(fun, x0, args, jac, callback, **options)
     elif meth == 'solnaq':
         return _minimize_solnaq(fun, x0, args, jac, callback, **options)
-
+    elif meth == 'cm':
+        return _minimize_cm(fun, x0, args, jac, callback, **options)
+    elif meth == 'nag':
+        return _minimize_nag(fun, x0, args, jac, callback, **options)
     elif meth == 'adam':
         return _minimize_adam(fun, x0, args, jac, callback, **options)
     elif meth == 'adasecant':

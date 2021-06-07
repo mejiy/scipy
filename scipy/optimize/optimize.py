@@ -4009,8 +4009,6 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
     fprime = jac
     epsilon = eps
     retall = return_all
-
-    #s = s_buffer[0]
     
     xk = asarray(x0).flatten()
     func_calls, f = wrap_function(f, args)
@@ -4023,21 +4021,11 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
     grad = myfprime(xk)
     v = v_buffer[0]
     k = iter[0]
-    
-   # if k == 0:
-       # v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad
-    #else:
-       # v_temp = v
-
-
-   # v = v_temp - (lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
-    
-    vp1 = mu * v + (lr_t * grad)
+      
+    vp1 = mu * v - (lr_t * grad)
     xkp1 = xk + vp1
  
-    #sk = xkp1 - xk  
     v_buffer.append(vp1)
-    #s_buffer.append(s)
 
     if callback is not None:
         callback(xk)
@@ -4064,9 +4052,8 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
     epsilon = eps
     retall = return_all
 
-    #s = s_buffer[0]
     v = v_buffer[0]
-    #k = iter[0]
+
     xk = asarray(x0).flatten()
     func_calls, f = wrap_function(f, args)
     if fprime is None:
@@ -4074,27 +4061,13 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    #if k == 0:
-     #   grad = myfprime(xk)
-    #else:                  
-    #    grad = myfprime(xk + mu * v)
     grad = myfprime(xk + mu * v)
     k = iter[0]
     
-   # if k == 0:
-       # v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad
-    #else:
-       # v_temp = v
-
-
-   # v = v_temp - (lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp)
-    
-    vp1 = mu * v + (lr_t * grad)
+    vp1 = mu * v - (lr_t * grad)
     xkp1 = xk + vp1
- 
-    #sk = xkp1 - xk  
+  
     v_buffer.append(vp1)
-    #s_buffer.append(s)
 
     if callback is not None:
         callback(xk)

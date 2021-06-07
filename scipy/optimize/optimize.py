@@ -4001,8 +4001,7 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     return result
 
 def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, mu=None,
-                     err=[], disp=False, return_all=False, speed_ini_t=None, decay_t=None,decaypower_t=None, s_buffer=None,
-                     lr_t=None,v_buffer=None,iter=[],
+                     err=[], disp=False, return_all=False, lr_t=None,v_buffer=None, iter=[],
                      **unknown_options):
 
     _check_unknown_options(unknown_options)
@@ -4019,6 +4018,7 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
         grad_calls, myfprime = wrap_function(approx_fprime, (f, epsilon))
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
+
 
     grad = myfprime(xk)
     v = v_buffer[0]
@@ -4055,8 +4055,7 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
 
 
 def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, mu=None,
-                     err=[], disp=False, return_all=False, speed_ini_t=None, decay_t=None,decaypower_t=None, s_buffer=None,
-                     lr_t=None,v_buffer=None,iter=[],
+                     err=[], disp=False, return_all=False, lr_t=None,v_buffer=None,iter=[],
                      **unknown_options):
 
     _check_unknown_options(unknown_options)
@@ -4074,7 +4073,10 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    grad = myfprime(xk + mu * v)
+    if k == 0:
+        grad = myfprime(xk)
+    else:                  
+        grad = myfprime(xk + mu * v)
     k = iter[0]
     
    # if k == 0:

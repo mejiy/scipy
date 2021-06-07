@@ -4066,7 +4066,7 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
 
     #s = s_buffer[0]
     v = v_buffer[0]
-    k = iter[0]
+    #k = iter[0]
     xk = asarray(x0).flatten()
     func_calls, f = wrap_function(f, args)
     if fprime is None:
@@ -4074,11 +4074,12 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
     else:
         grad_calls, myfprime = wrap_function(fprime, args)
 
-    if k == 0:
-        grad = myfprime(xk)
-    else:                  
-        grad = myfprime(xk + mu * v)
-    
+    #if k == 0:
+     #   grad = myfprime(xk)
+    #else:                  
+    #    grad = myfprime(xk + mu * v)
+    grad = myfprime(xk + mu * v)
+    k = iter[0]
     
    # if k == 0:
        # v_temp = (1. - alpha_t * beta_t) * xk - beta_t ** 2 * grad + beta_t * speed_ini_t * grad

@@ -3984,7 +3984,7 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     xkp1 = xk - (lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * ((alpha_t - 1. / beta_t) * xk + 1. / beta_t * v_temp + beta_t * grad)
     sk = xkp1 - xk
     v_buffer.append(v)
-    s_buffer.append(s)
+    s_buffer.append(sk)
 
     if callback is not None:
         callback(xk)

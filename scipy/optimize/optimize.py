@@ -4001,7 +4001,7 @@ def _minimize_nadian(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=
     return result
 
 def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, mu=None,
-                     err=[], disp=False, return_all=False, lr_t=None,v_buffer=None, iter=[],
+                     err=[], disp=False, return_all=False,decay_t=None,decaypower_t=None,lr_t=None,v_buffer=None, iter=[],
                      **unknown_options):
 
     _check_unknown_options(unknown_options)
@@ -4022,7 +4022,7 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
     v = v_buffer[0]
     k = iter[0]
       
-    vp1 = mu * v - (lr_t[0] * grad)
+    vp1 = mu * v - ((lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * grad)
     xkp1 = xk + vp1
  
     v_buffer.append(vp1)
@@ -4043,7 +4043,7 @@ def _minimize_cm(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf,
 
 
 def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf, eps=_epsilon, maxiter=None, mu=None,
-                     err=[], disp=False, return_all=False, lr_t=None,v_buffer=None,iter=[],
+                     err=[], disp=False, return_all=False,decay_t=None,decaypower_t=None,lr_t=None,v_buffer=None,iter=[],
                      **unknown_options):
 
     _check_unknown_options(unknown_options)
@@ -4064,7 +4064,7 @@ def _minimize_nag(fun, x0, args=(), jac=None, callback=None, gtol=1e-5, norm=Inf
     grad = myfprime(xk + mu * v)
     k = iter[0]
     
-    vp1 = mu * v - (lr_t[0] * grad)
+    vp1 = mu * v - ((lr_t[0] * decay_t / np.power(k+1, decaypower_t)) * grad)
     xkp1 = xk + vp1
   
     v_buffer.append(vp1)
